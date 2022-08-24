@@ -1,7 +1,20 @@
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { List, AutoSizer } from "react-virtualized";
 
 import listPost from "../constant/listPost";
+
+let rememberScrollTop;
+
+const onScroll = ({
+  scrollTop,
+}: {
+  clientHeight: number;
+  scrollHeight: number;
+  scrollTop: number;
+}) => {
+  rememberScrollTop = scrollTop;
+};
 
 const rowRender = ({ index, isScrolling, key, style }) => {
   const currentPost = listPost[index];
@@ -18,6 +31,10 @@ const rowRender = ({ index, isScrolling, key, style }) => {
 };
 
 const ListVirtualized = () => {
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    didMountRef.current = true;
+  }, []);
   return (
     <div style={{ height: "40vh" }}>
       <h2> VirtualizeList</h2>
@@ -31,6 +48,10 @@ const ListVirtualized = () => {
             rowCount={listPost.length}
             rowHeight={100}
             rowRenderer={rowRender}
+            onScroll={onScroll}
+            // scrollTop={didMountRef.current ? undefined : rememberScrollTop}
+            scrollTop={didMountRef.current ? undefined : rememberScrollTop}
+
             // scrollToIndex={scrollToIndex}
           />
         )}
