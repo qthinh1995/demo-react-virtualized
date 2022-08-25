@@ -1,4 +1,4 @@
-const listPost = new Array(5000)
+const listPost = new Array(500)
   .fill({
     title: "Post Title",
     description: "Post description",

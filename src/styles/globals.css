@@ -24,3 +24,25 @@ a {
     background: black;
   }
 }
+
+.spinner-border {
+  color: #17a2b8 !important;
+  display: block;
+  width: 4rem;
+  height: 4rem;
+  vertical-align: -0.125em;
+  border: 0.4em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: 0.75s linear infinite spinner-border;
+  margin: auto
+}
+
+@keyframes spinner-border {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
