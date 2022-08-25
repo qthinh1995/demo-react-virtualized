@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { List, AutoSizer } from "react-virtualized";
 
@@ -13,7 +13,7 @@ const onScroll = ({
   scrollHeight: number;
   scrollTop: number;
 }) => {
-  rememberScrollTop = scrollTop;
+  rememberScrollTop = scrollTop; //the scrollTop position should be saved in the variable (shouldn't be the state, cause we don't need to rerender on this)
 };
 
 const rowRender = ({ index, isScrolling, key, style }) => {
@@ -31,33 +31,33 @@ const rowRender = ({ index, isScrolling, key, style }) => {
 };
 
 const ListVirtualized = () => {
-  const didMountRef = useRef(false);
-  useEffect(() => {
-    didMountRef.current = true;
-  }, []);
   return (
     <div style={{ height: "40vh" }}>
       <h2> VirtualizeList</h2>
       <AutoSizer>
         {({ height, width }) => (
-          <List
+          <MyCustomList
             height={height}
             width={width}
-            // overscanRowCount={overscanRowCount}
-            // noRowsRenderer={this._noRowsRenderer}
             rowCount={listPost.length}
             rowHeight={100}
             rowRenderer={rowRender}
             onScroll={onScroll}
-            // scrollTop={didMountRef.current ? undefined : rememberScrollTop}
-            scrollTop={didMountRef.current ? undefined : rememberScrollTop}
-
-            // scrollToIndex={scrollToIndex}
+            scrollTop={rememberScrollTop}
           />
         )}
       </AutoSizer>
     </div>
   );
+};
+
+const MyCustomList = ({ scrollTop, ...props }) => {
+  const [didMount, setDidMount] = useState(false);
+
+  useEffect(() => {
+    setDidMount(true);
+  }, []);
+  return <List {...props} scrollTop={didMount ? undefined : scrollTop} />; //scrollTop should be set at the beginning then change to undefined to allow freely scrolling
 };
 
 export default ListVirtualized;
