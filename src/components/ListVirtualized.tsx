@@ -14,7 +14,7 @@ import Spinner from "./Spinner";
 
 const cache = new CellMeasurerCache();
 
-//should be in redux or some global state
+//should be in ome global state like redux or react context
 let rememberScrollTop;
 let rememberListPost = [];
 let rememberCurrentPage = 1;
