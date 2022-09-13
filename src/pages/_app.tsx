@@ -2,6 +2,8 @@ import '../styles/globals.css'
 import "react-virtualized/styles.css";
 import type { AppProps } from 'next/app'
 import { useReducer } from "react";
+import Head from "next/head";
+
 
 const pageListPostInitialState = {
   listPost: [],
@@ -22,7 +24,20 @@ function reducer(state, action) {
 function MyApp({ Component, pageProps }: AppProps) {
   const [state, dispatch] = useReducer(reducer, pageListPostInitialState);
 
-  return <Component {...pageProps} />;
+  
+
+  return (
+    <>
+      <Head>
+        <meta name="viewport" content="viewport-fit=cover" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0"
+        ></meta>
+      </Head>{" "}
+      <Component {...pageProps} />
+    </>
+  );
 }
 
 export default MyApp

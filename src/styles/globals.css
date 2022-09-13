@@ -46,3 +46,25 @@ a {
     transform: rotate(360deg);
   }
 }
+
+.post-item{
+  display: flex;
+  margin: 10px;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+  border-radius: 4px;
+}
+
+.post-item .post-title {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-item .post-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

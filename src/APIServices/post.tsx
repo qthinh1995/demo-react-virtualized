@@ -4,15 +4,20 @@ const generatePost = (index) => {
   return {
     id: faker.datatype.uuid(),
     title: `${index}__${faker.lorem.lines()}`,
-    description: faker.lorem.paragraph(),
-    detail: faker.lorem.paragraph(12),
+    description: faker.lorem.paragraphs(20),
+    detail: faker.lorem.paragraphs(50),
     thumbnail: faker.image.cats(),
+
+    author: {
+      name: faker.name,
+      age: faker.datatype.bigInt({ min: 0, max: 100 }),
+      tel: faker.phone,
+    },
   };
 };
 
 export const fetchPost = (id) =>
   new Promise((resolve, reject) => {
-    console.log("id: ", id);
     setTimeout(() => {
       resolve(generatePost(id));
     }, 800);
@@ -20,7 +25,6 @@ export const fetchPost = (id) =>
 
 export const fetchPosts = ({ page, pageSize = 20 } = {}) =>
   new Promise((resolve, reject) => {
-    console.log("page: ", page);
     setTimeout(() => {
       const indexStartForm = (page - 1) * pageSize;
       const posts = new Array(pageSize)
