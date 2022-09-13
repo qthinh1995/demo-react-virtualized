@@ -18,33 +18,39 @@ const FilterBar = ({ query = {} }: any) => {
   return (
     <div>
       Filter bar:
-      <label>
-        Post Title:{" "}
-        <input
-          value={filterData.title}
-          onChange={(e) => {
-            onChangeField(e.target.value, "title");
+      <div>
+        <label>
+          Post Title:{" "}
+          <input
+            value={filterData.title}
+            onChange={(e) => {
+              onChangeField(e.target.value, "title");
+            }}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Is Public:{" "}
+          <input
+            type="checkbox"
+            checked={filterData.isPublic}
+            onChange={(e) => {
+              onChangeField(e.target.checked, "isPublic");
+            }}
+          ></input>
+        </label>
+      </div>
+      <div>
+        <Link
+          href={{
+            pathname: "/",
+            query: filterData,
           }}
-        />
-      </label>
-      <label>
-        Is Public:{" "}
-        <input
-          type="checkbox"
-          checked={filterData.isPublic}
-          onChange={(e) => {
-            onChangeField(e.target.checked, "isPublic");
-          }}
-        ></input>
-      </label>
-      <Link
-        href={{
-          pathname: "/",
-          query: filterData,
-        }}
-      >
-        <button>Submit</button>
-      </Link>
+        >
+          <button>Submit</button>
+        </Link>
+      </div>
     </div>
   );
 };
