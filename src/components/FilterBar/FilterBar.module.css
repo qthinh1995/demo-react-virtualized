@@ -1,0 +1,8 @@
+
+.filter-bar__body {
+  display: flex; 
+  flex-direction: row;
+}
+.filter-bar__body >*{
+  padding: 10px;
+}

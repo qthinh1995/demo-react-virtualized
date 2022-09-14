@@ -1,0 +1,12 @@
+.tab {
+  display: inline-block;
+  padding: 10px;
+  border-radius: 2px;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.tab.active {
+  border-bottom: 5px solid #777;
+  font-weight: bold;
+}

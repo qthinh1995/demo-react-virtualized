@@ -2,14 +2,29 @@ import { useState } from "react";
 import router, { useRouter } from "next/router";
 import Link from "next/link";
 
-const FilterBar = ({ query = {} }: any) => {
+import style from "./FilterBar.module.css";
+
+let lastFilter;
+
+export const formatQUery = (query = {}) => {
   const { title = "", isPublic = "true" } = query;
 
-  const [filterData, setFilterData] = useState({
+  const output = {
     title,
     isPublic: isPublic === "true",
-  });
-  console.log("filterData: ", filterData);
+  };
+
+  if (JSON.stringify(output) === JSON.stringify(lastFilter)) {
+    //deep compare
+    return lastFilter;
+  }
+  lastFilter = output;
+  return output;
+};
+
+const FilterBar = ({ query = {} }: any) => {
+  const { asPath, pathname } = useRouter();
+  const [filterData, setFilterData] = useState(formatQUery(query));
 
   const onChangeField = (value, fieldName) => {
     setFilterData((filter) => ({ ...filter, [fieldName]: value }));
@@ -17,8 +32,9 @@ const FilterBar = ({ query = {} }: any) => {
 
   return (
     <div>
-      Filter bar:
-      <div>
+      <h2>Filter bar:</h2>
+
+      <div className={style["filter-bar__body"]}>
         <label>
           Post Title:{" "}
           <input
@@ -28,8 +44,6 @@ const FilterBar = ({ query = {} }: any) => {
             }}
           />
         </label>
-      </div>
-      <div>
         <label>
           Is Public:{" "}
           <input
@@ -40,11 +54,9 @@ const FilterBar = ({ query = {} }: any) => {
             }}
           ></input>
         </label>
-      </div>
-      <div>
         <Link
           href={{
-            pathname: "/",
+            pathname,
             query: filterData,
           }}
         >

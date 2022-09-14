@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
 import { fetchPosts } from "../APIServices/post";
-import FilterBar, { formatQUery } from "../components/FilterBar";
+import FilterBar from "../components/FilterBar";
 import HeaderBar from "../components/HeaderBar";
 import Link from "../components/Link";
 import ListVirtualized from "../components/ListVirtualized";
@@ -34,16 +34,15 @@ const onScroll = ({
 };
 
 const Home: NextPage = ({ query }: any) => {
-  const formattedQuery = formatQUery(query);
   const [listPost, setListPost] = useState(rememberListPost);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(rememberCurrentPage);
   const rowCount = listPost.length;
 
   useEffect(() => {
+    if (listPost.length > 0) return; // should only fetch data when posts is empty
     setLoading(true);
-    setListPost([]);
-    fetchPosts({ pageSize, page: currentPage, ...formattedQuery })
+    fetchPosts({ pageSize, page: currentPage })
       .then((posts) => {
         rememberListPost = posts;
         setListPost(posts);
@@ -55,7 +54,7 @@ const Home: NextPage = ({ query }: any) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [formattedQuery]);
+  }, []);
   const listPostGrouped = useMemo(() => groupArr(listPost, column), [listPost]);
 
   const rowRender = ({ index, isScrolling, key, style, parent }) => {
