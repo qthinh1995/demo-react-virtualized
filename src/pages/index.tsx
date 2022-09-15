@@ -42,30 +42,30 @@ const Home: NextPage = ({ query, path }: any) => {
       loading: false,
       listPost: [],
       currentPage: 1,
+      isInit: true,
     },
     asPath
   );
 
   const pageUpdateState = (value) => {
-    console.log("value: ", value);
-    setPageState({ ...pageState, ...value });
+    setPageState((state) => ({ ...state, ...value }));
   };
   const formattedQuery = formatQUery(query);
   const rowCount = pageState.listPost.length;
 
   useEffect(() => {
-    pageUpdateState({ loading: true });
+    if (!pageState.isInit) return;
+    pageUpdateState({ loading: true, isInit: false });
     fetchPosts({ pageSize, page: pageState.currentPage, ...formattedQuery })
       .then((posts) => {
         const newPage = pageState.currentPage + 1;
         pageUpdateState({
           currentPage: newPage,
           listPost: posts,
-          loading: false,
         });
       })
       .finally(() => {
-        // pageUpdateState({ loading: false });
+        pageUpdateState({ loading: false });
       });
   }, [formattedQuery]);
   const listPostGrouped = useMemo(
@@ -126,26 +126,25 @@ const Home: NextPage = ({ query, path }: any) => {
         </div>
         {pageState.loading ? (
           <Spinner />
-        ) : // <LoadMore
-        //   onClick={() => {
-        //     setLoading(true);
-        //     fetchPosts({ pageSize, page: pageState.currentPage })
-        //       .then((newPosts) => {
-        //         const newListPost = [...pageState.listPost, ...newPosts];
-        //         rememberListPost = newListPost;
+        ) : (
+          <LoadMore
+            onClick={() => {
+              pageUpdateState({ loading: true });
+              fetchPosts({ pageSize, page: pageState.currentPage })
+                .then((newPosts) => {
+                  const newListPost = [...pageState.listPost, ...newPosts];
 
-        //         setListPost(newListPost);
-
-        //         const newPage = pageState.currentPage + 1;
-        //         rememberCurrentPage = newPage;
-        //         setCurrentPage(newPage);
-        //       })
-        //       .finally(() => {
-        //         setLoading(false);
-        //       });
-        //   }}
-        // />
-        null}
+                  pageUpdateState({
+                    listPost: newListPost,
+                    currentPage: pageState.currentPage + 1,
+                  });
+                })
+                .finally(() => {
+                  pageUpdateState({ loading: false });
+                });
+            }}
+          />
+        )}
       </div>
     </div>
   );
