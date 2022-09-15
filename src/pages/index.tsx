@@ -14,59 +14,68 @@ import { groupArr, roughSizeOfObject } from "../utils";
 import LoadMore from "../components/LoadMore";
 import Spinner from "../components/Spinner";
 import useStateMemorize from "../hooks/useStateMemorize";
+import {
+  selectPageState,
+  setPageState,
+  setPageFieldState,
+} from "../store/pageSlice";
+import { useDispatch, useSelector } from "react-redux";
 const cache = new CellMeasurerCache();
 
 //should be in ome global state like redux or react context
-let rememberScrollTop;
-let rememberListPost = [];
-let rememberCurrentPage = 1;
+
 
 const pageSize = 500;
 const column = 3;
 
-const onScroll = ({
-  scrollTop,
-  ...other
-}: {
-  clientHeight: number;
-  scrollHeight: number;
-  scrollTop: number;
-}) => {
-  rememberScrollTop = scrollTop; //the scrollTop position should be saved in the variable (shouldn't be the state, cause we don't need to rerender on this)
+
+
+const defaultState = {
+  loading: false,
+  listPost: [],
+  currentPage: 1,
+  isInit: true,
+  scrollTop: 0
 };
 
 const Home: NextPage = ({ query, path }: any) => {
   const { asPath, pathname } = useRouter();
-  const [pageState, setPageState] = useStateMemorize(
-    {
-      loading: false,
-      listPost: [],
-      currentPage: 1,
-      isInit: true,
-    },
-    asPath
-  );
+  const pageState = useSelector(selectPageState(asPath)) || defaultState;
+  console.log('pageState: ', pageState);
+  const dispatch = useDispatch();
 
-  const pageUpdateState = (value) => {
-    setPageState((state) => ({ ...state, ...value }));
+  const pageUpdateState = (objectInput) => {
+    for (const key in objectInput) {
+      dispatch(
+        setPageFieldState({
+          data: objectInput[key],
+          key: asPath,
+          fieldName: key+"",
+        })
+      );
+    }
+
   };
   const formattedQuery = formatQUery(query);
   const rowCount = pageState.listPost.length;
 
   useEffect(() => {
     if (!pageState.isInit) return;
+    dispatch(setPageState({ data: defaultState, key: asPath })); //init first time
+
     pageUpdateState({ loading: true, isInit: false });
-    fetchPosts({ pageSize, page: pageState.currentPage, ...formattedQuery })
-      .then((posts) => {
-        const newPage = pageState.currentPage + 1;
-        pageUpdateState({
-          currentPage: newPage,
-          listPost: posts,
-        });
-      })
-      .finally(() => {
-        pageUpdateState({ loading: false });
+    fetchPosts({
+      pageSize,
+      page: pageState.currentPage,
+      ...formattedQuery,
+    }).then((posts) => {
+      const newPage = pageState.currentPage + 1;
+      pageUpdateState({
+        currentPage: newPage,
+        listPost: posts,
+        loading: false,
       });
+    });
   }, [formattedQuery]);
   const listPostGrouped = useMemo(
     () => groupArr(pageState.listPost, column),
@@ -100,6 +109,17 @@ const Home: NextPage = ({ query, path }: any) => {
     );
   };
 
+  const onScroll = ({
+    scrollTop,
+    ...other
+  }: {
+    clientHeight: number;
+    scrollHeight: number;
+    scrollTop: number;
+    }) => {
+    pageUpdateState({scrollTop})
+  };
+
   return (
     <div style={{ width: 1200, maxWidth: "100vw", margin: "auto" }}>
       <HeaderBar />
@@ -116,12 +136,13 @@ const Home: NextPage = ({ query, path }: any) => {
         </h2>
         <div style={{ height: "70vh" }}>
           <ListVirtualized
+            key={ asPath}
             data={listPostGrouped}
             rowRender={rowRender}
             onScroll={onScroll}
             deferredMeasurementCache={cache}
             rowHeight={cache.rowHeight}
-            scrollTop={rememberScrollTop}
+            scrollTop={pageState.scrollTop}
           />
         </div>
         {pageState.loading ? (
