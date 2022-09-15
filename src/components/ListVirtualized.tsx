@@ -29,11 +29,6 @@ const ListVirtualized = ({
   deferredMeasurementCache: any;
   rowHeight: any;
 } & any) => {
-  console.log("props: ", props);
-  useEffect(() => {
-    console.log("update");
-    return () => console.log("unmount");
-  }, []);
   return (
     <AutoSizer>
       {({ width, height }) => (

@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import { useEffect, useMemo, useState } from "react";
+import router, { useRouter } from "next/router";
 import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
 import { fetchPosts } from "../APIServices/post";
@@ -12,6 +13,7 @@ import { groupArr, roughSizeOfObject } from "../utils";
 
 import LoadMore from "../components/LoadMore";
 import Spinner from "../components/Spinner";
+import useStateMemorize from "../hooks/useStateMemorize";
 const cache = new CellMeasurerCache();
 
 //should be in ome global state like redux or react context
@@ -33,30 +35,43 @@ const onScroll = ({
   rememberScrollTop = scrollTop; //the scrollTop position should be saved in the variable (shouldn't be the state, cause we don't need to rerender on this)
 };
 
-const Home: NextPage = ({ query }: any) => {
+const Home: NextPage = ({ query, path }: any) => {
+  const { asPath, pathname } = useRouter();
+  const [pageState, setPageState] = useStateMemorize(
+    {
+      loading: false,
+      listPost: [],
+      currentPage: 1,
+    },
+    asPath
+  );
+
+  const pageUpdateState = (value) => {
+    console.log("value: ", value);
+    setPageState({ ...pageState, ...value });
+  };
   const formattedQuery = formatQUery(query);
-  const [listPost, setListPost] = useState(rememberListPost);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(rememberCurrentPage);
-  const rowCount = listPost.length;
+  const rowCount = pageState.listPost.length;
 
   useEffect(() => {
-    setLoading(true);
-    setListPost([]);
-    fetchPosts({ pageSize, page: currentPage, ...formattedQuery })
+    pageUpdateState({ loading: true });
+    fetchPosts({ pageSize, page: pageState.currentPage, ...formattedQuery })
       .then((posts) => {
-        rememberListPost = posts;
-        setListPost(posts);
-
-        const newPage = currentPage + 1;
-        rememberCurrentPage = newPage;
-        setCurrentPage(newPage);
+        const newPage = pageState.currentPage + 1;
+        pageUpdateState({
+          currentPage: newPage,
+          listPost: posts,
+          loading: false,
+        });
       })
       .finally(() => {
-        setLoading(false);
+        // pageUpdateState({ loading: false });
       });
   }, [formattedQuery]);
-  const listPostGrouped = useMemo(() => groupArr(listPost, column), [listPost]);
+  const listPostGrouped = useMemo(
+    () => groupArr(pageState.listPost, column),
+    [pageState.listPost]
+  );
 
   const rowRender = ({ index, isScrolling, key, style, parent }) => {
     const row = listPostGrouped[index];
@@ -93,7 +108,11 @@ const Home: NextPage = ({ query }: any) => {
       <div>
         <h2>
           VirtualizeList: Total {rowCount} items, roundSize of the data:{" "}
-          {useMemo(() => Math.round(roughSizeOfObject(listPost)), [listPost])}Kb
+          {useMemo(
+            () => Math.round(roughSizeOfObject(pageState.listPost)),
+            [pageState.listPost]
+          )}
+          Kb
         </h2>
         <div style={{ height: "70vh" }}>
           <ListVirtualized
@@ -105,29 +124,28 @@ const Home: NextPage = ({ query }: any) => {
             scrollTop={rememberScrollTop}
           />
         </div>
-        {loading ? (
+        {pageState.loading ? (
           <Spinner />
-        ) : (
-          <LoadMore
-            onClick={() => {
-              setLoading(true);
-              fetchPosts({ pageSize, page: currentPage })
-                .then((newPosts) => {
-                  const newListPost = [...listPost, ...newPosts];
-                  rememberListPost = newListPost;
+        ) : // <LoadMore
+        //   onClick={() => {
+        //     setLoading(true);
+        //     fetchPosts({ pageSize, page: pageState.currentPage })
+        //       .then((newPosts) => {
+        //         const newListPost = [...pageState.listPost, ...newPosts];
+        //         rememberListPost = newListPost;
 
-                  setListPost(newListPost);
+        //         setListPost(newListPost);
 
-                  const newPage = currentPage + 1;
-                  rememberCurrentPage = newPage;
-                  setCurrentPage(newPage);
-                })
-                .finally(() => {
-                  setLoading(false);
-                });
-            }}
-          />
-        )}
+        //         const newPage = pageState.currentPage + 1;
+        //         rememberCurrentPage = newPage;
+        //         setCurrentPage(newPage);
+        //       })
+        //       .finally(() => {
+        //         setLoading(false);
+        //       });
+        //   }}
+        // />
+        null}
       </div>
     </div>
   );
