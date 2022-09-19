@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
-import { useEffect, useMemo, useState } from "react";
-import router, { useRouter } from "next/router";
+import { useRouter } from "next/router";
+import { useEffect, useMemo } from "react";
 import { CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
 import { fetchPosts } from "../APIServices/post";
@@ -11,37 +11,33 @@ import ListVirtualized from "../components/ListVirtualized";
 import PostItem from "../components/PostItem";
 import { groupArr, roughSizeOfObject } from "../utils";
 
+import { useDispatch, useSelector } from "react-redux";
+import { List, WindowScroller } from "react-virtualized";
 import LoadMore from "../components/LoadMore";
 import Spinner from "../components/Spinner";
-import useStateMemorize from "../hooks/useStateMemorize";
 import {
   selectPageState,
-  setPageState,
   setPageFieldState,
+  setPageState,
 } from "../store/pageSlice";
-import { useDispatch, useSelector } from "react-redux";
 const cache = new CellMeasurerCache();
 
 //should be in ome global state like redux or react context
 
-
 const pageSize = 500;
 const column = 3;
-
-
 
 const defaultState = {
   loading: false,
   listPost: [],
   currentPage: 1,
   isInit: true,
-  scrollTop: 0
+  scrollTop: 0,
 };
 
 const Home: NextPage = ({ query, path }: any) => {
   const { asPath, pathname } = useRouter();
   const pageState = useSelector(selectPageState(asPath)) || defaultState;
-  console.log('pageState: ', pageState);
   const dispatch = useDispatch();
 
   const pageUpdateState = (objectInput) => {
@@ -50,16 +46,31 @@ const Home: NextPage = ({ query, path }: any) => {
         setPageFieldState({
           data: objectInput[key],
           key: asPath,
-          fieldName: key+"",
+          fieldName: key + "",
         })
       );
     }
-
   };
   const formattedQuery = formatQUery(query);
   const rowCount = pageState.listPost.length;
+ 
 
   useEffect(() => {
+    const onScroll = () => {
+      pageUpdateState({ scrollTop: window.scrollY });
+    }; 
+    window.addEventListener('scroll', onScroll)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof scroll === "function") {
+      console.log("scoll", pageState.scrollTop);
+      scroll(0,pageState.scrollTop)
+    }
     if (!pageState.isInit) return;
     dispatch(setPageState({ data: defaultState, key: asPath })); //init first time
 
@@ -82,7 +93,7 @@ const Home: NextPage = ({ query, path }: any) => {
     [pageState.listPost]
   );
 
-  const rowRender = ({ index, isScrolling, key, style, parent }) => {
+  const rowRender = ({ index, key, style, parent }) => {
     const row = listPostGrouped[index];
     return (
       <CellMeasurer
@@ -109,65 +120,64 @@ const Home: NextPage = ({ query, path }: any) => {
     );
   };
 
-  const onScroll = ({
-    scrollTop,
-    ...other
-  }: {
-    clientHeight: number;
-    scrollHeight: number;
-    scrollTop: number;
-    }) => {
-    pageUpdateState({scrollTop})
-  };
+
+  const dataSize = useMemo(
+    () => Math.round(roughSizeOfObject(pageState.listPost)),
+    [pageState.listPost]
+  )
 
   return (
-    <div style={{ width: 1200, maxWidth: "100vw", margin: "auto" }}>
-      <HeaderBar />
-      <FilterBar query={query} />
-      {/* <>Body</> */}
-      <div>
-        <h2>
-          VirtualizeList: Total {rowCount} items, roundSize of the data:{" "}
-          {useMemo(
-            () => Math.round(roughSizeOfObject(pageState.listPost)),
-            [pageState.listPost]
-          )}
-          Kb
-        </h2>
-        <div style={{ height: "70vh" }}>
-          <ListVirtualized
-            key={ asPath}
-            data={listPostGrouped}
-            rowRender={rowRender}
-            onScroll={onScroll}
-            deferredMeasurementCache={cache}
-            rowHeight={cache.rowHeight}
-            scrollTop={pageState.scrollTop}
-          />
-        </div>
-        {pageState.loading ? (
-          <Spinner />
-        ) : (
-          <LoadMore
-            onClick={() => {
-              pageUpdateState({ loading: true });
-              fetchPosts({ pageSize, page: pageState.currentPage })
-                .then((newPosts) => {
-                  const newListPost = [...pageState.listPost, ...newPosts];
+    <WindowScroller>
+      {({ height, isScrolling, registerChild, scrollTop }) => (
+        <div style={{ width: 1200, maxWidth: "100vw", margin: "auto" }}>
+          <HeaderBar />
+          <FilterBar query={query} />
+          {/* <>Body</> */}
+          <div>
+            <h2>
+              VirtualizeList: Total {rowCount} items, roundSize of the data:{" "}
+              {dataSize}
+              Kb
+            </h2>
+            <div ref={registerChild}>
+              <ListVirtualized
+                autoHeight
+                height={height}
+                isScrolling={isScrolling}
+                key={asPath}
+                data={listPostGrouped}
+                rowRenderer={rowRender}
+                deferredMeasurementCache={cache}
+                rowHeight={cache.rowHeight}
+                // scrollTop={pageState.scrollTop}
+                scrollTop={scrollTop}
+              />
+            </div>
+            {pageState.loading ? (
+              <Spinner />
+            ) : (
+              <LoadMore
+                onClick={() => {
+                  pageUpdateState({ loading: true });
+                  fetchPosts({ pageSize, page: pageState.currentPage })
+                    .then((newPosts) => {
+                      const newListPost = [...pageState.listPost, ...newPosts];
 
-                  pageUpdateState({
-                    listPost: newListPost,
-                    currentPage: pageState.currentPage + 1,
-                  });
-                })
-                .finally(() => {
-                  pageUpdateState({ loading: false });
-                });
-            }}
-          />
-        )}
-      </div>
-    </div>
+                      pageUpdateState({
+                        listPost: newListPost,
+                        currentPage: pageState.currentPage + 1,
+                      });
+                    })
+                    .finally(() => {
+                      pageUpdateState({ loading: false });
+                    });
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </WindowScroller>
   );
 };
 

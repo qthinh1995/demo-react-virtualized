@@ -4,6 +4,7 @@ import {
   AutoSizer,
   CellMeasurer,
   CellMeasurerCache,
+  WindowScroller,
 } from "react-virtualized";
 
 import { fetchPosts } from "../APIServices/post";
@@ -19,29 +20,49 @@ const pageSize = 500;
 const column = 3;
 const ListVirtualized = ({
   data = [],
-  rowRender = () => null,
-  onScroll,
   ...props
 }: {
   data: any[];
-  rowRender: () => React.ReactNode;
   onScroll: () => void;
-  deferredMeasurementCache: any;
   rowHeight: any;
 } & any) => {
   return (
-    <AutoSizer>
-      {({ width, height }) => (
-        <MyCustomList
+    <List rowCount={data.length} width={1200}  {...props} />
+  );
+
+  return (
+    <WindowScroller>
+      {({ height, isScrolling, onChildScroll, scrollTop }) => (
+        <List
+          autoHeight
           height={height}
-          width={width}
+          isScrolling={isScrolling}
+          onScroll={onChildScroll}
+          // rowCount={...}
+          // rowHeight={...}
+          // rowRenderer={...}
+          // scrollTop={scrollTop}
+          // width={...}
+        />
+      )}
+    </WindowScroller>
+  );
+  return (
+    <WindowScroller>
+      {({ height, isScrolling, onScroll, scrollTop }) => (
+        <MyCustomList
+          autoHeight
+          height={height}
+          // width={width}
           rowCount={data.length}
           rowRenderer={rowRender}
           onScroll={onScroll}
+          deferredMeasurementCache={deferredMeasurementCache}
+          scrollTop={scrollTop}
           {...props}
         />
       )}
-    </AutoSizer>
+    </WindowScroller>
   );
 };
 
